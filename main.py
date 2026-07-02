@@ -1,10 +1,9 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 import yaml
 import os
 
-load_dotenv()
 
 app = FastAPI()
 
@@ -50,18 +49,20 @@ def effective_config(set: list[str] = Query(default=[])):
                 config[k] = coerce(k, v)
 
     # .env layer
-    if os.getenv("NUM_WORKERS"):
-        config["workers"] = coerce("workers", os.getenv("NUM_WORKERS"))
+    env_file = dotenv_values(".env")
 
-    if os.getenv("APP_LOG_LEVEL"):
-        config["log_level"] = os.getenv("APP_LOG_LEVEL")
+    if "NUM_WORKERS" in env_file:
+        config["workers"] = coerce("workers", env_file["NUM_WORKERS"])
+
+    if "APP_LOG_LEVEL" in env_file:
+        config["log_level"] = env_file["APP_LOG_LEVEL"]
 
     # OS environment layer
     env_map = {
         "APP_DEBUG": "debug",
         "APP_LOG_LEVEL": "log_level",
         "APP_API_KEY": "api_key",
-    }
+        }
 
     for env_name, key in env_map.items():
         if env_name in os.environ:
